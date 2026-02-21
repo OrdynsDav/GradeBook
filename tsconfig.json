@@ -5,10 +5,10 @@
     "baseUrl": ".",
     "paths": {
       "@app/*": [
-        "src/app/*"
+        "src/1_app/*"
       ],
       "@pages/*": [
-        "src/pages/*"
+        "src/2_pages/*"
       ],
       "@widgets/*": [
         "src/widgets/*"
@@ -17,10 +17,10 @@
         "src/features/*"
       ],
       "@entities/*": [
-        "src/entities/*"
+        "src/5_entities/*"
       ],
       "@shared/*": [
-        "src/shared/*"
+        "src/6_shared/*"
       ],
       "@assets/*": [
         "src/assets/*"

@@ -17,6 +17,7 @@
       "bundleIdentifier": "com.pkt.app"
     },
     "android": {
+      "label": "ПКТ",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#800020"
