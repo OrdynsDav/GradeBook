@@ -1,0 +1,27 @@
+{
+  "expo": {
+    "name": "ПКТ",
+    "slug": "ПКТ",
+    "version": "1.0.0",
+    "orientation": "default",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#800020"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.pkt.app"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#800020"
+      },
+      "package": "com.pkt.app"
+    }
+  }
+}
