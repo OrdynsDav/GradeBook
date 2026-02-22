@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "ПКТ",
-    "slug": "ПКТ",
+    "slug": "pkt",
     "version": "1.0.0",
     "orientation": "default",
     "icon": "./assets/icon.png",
@@ -22,7 +22,13 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#800020"
       },
-      "package": "com.pkt.app"
+      "package": "com.pkt.app",
+      "usesCleartextTraffic": true
+    },
+    "extra": {
+      "eas": {
+        "projectId": "c70422b6-a928-495e-8571-df80d6b3b62c"
+      }
     }
   }
 }

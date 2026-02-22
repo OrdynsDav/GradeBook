@@ -1,3 +1,4 @@
+export type ThemeMode = 'system' | 'light' | 'dark';
 type RuntimeThemeMode = 'light' | 'dark';
 
 export const lightColors = {

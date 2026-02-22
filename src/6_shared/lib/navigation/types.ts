@@ -2,7 +2,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 /**
  * Параметры экранов в стеке «Профиль» (вкладка Профиль).
- * Добавляй сюда новый экран, когда создаёшь раздел в профиле.
+ * FSD: типы навигации в shared, чтобы pages не импортировали из app.
  */
 export type ProfileStackParamList = {
   ProfileMain: undefined;

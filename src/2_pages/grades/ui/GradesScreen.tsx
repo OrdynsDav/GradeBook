@@ -1,12 +1,20 @@
-import React, { useCallback, memo } from 'react';
-import { View, StyleSheet, FlatList } from 'react-native';
+import React, { useCallback, memo, useState, useEffect } from 'react';
+import { View, StyleSheet, FlatList, ActivityIndicator } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 import { ScreenContainer, Typography, Card } from '@shared/ui';
-import { colors, spacing, borderRadius, type Theme } from '@shared/config/theme';
+import { spacing, borderRadius, type Theme, type ThemeColors } from '@shared/config/theme';
 import { useTheme } from '@shared/lib';
-import { GradesStackParamList } from '@app/navigation/types';
+import { SubjectsApi, type SubjectListItem } from '@shared/lib/api';
+import type { GradesStackParamList } from '@shared/lib/navigation';
+import { getGradeColor, withAlpha } from '@shared/lib/utils';
+import {
+  useGradesStore,
+  getComputedFromStore,
+  getSubjectsWithGrades,
+  type SubjectWithGrades,
+} from '@entities/grades';
 
 type NavigationProp = NativeStackNavigationProp<GradesStackParamList, 'GradesList'>;
 
@@ -18,30 +26,13 @@ interface Subject {
   teacher: string;
 }
 
-const subjects: Subject[] = [
-  { id: '1', name: 'Математика', average: 4.5, grades: [5, 4, 5, 4, 5], teacher: 'Петрова А.И.' },
-  { id: '2', name: 'Русский язык', average: 4.2, grades: [4, 4, 5, 4, 4], teacher: 'Сидорова М.П.' },
-  { id: '3', name: 'Физика', average: 4.8, grades: [5, 5, 5, 4, 5], teacher: 'Козлов В.А.' },
-  { id: '4', name: 'История', average: 4.0, grades: [4, 4, 4, 4, 4], teacher: 'Иванов С.С.' },
-  { id: '5', name: 'Английский язык', average: 4.6, grades: [5, 4, 5, 5, 4], teacher: 'Смирнова Е.В.' },
-  { id: '6', name: 'Химия', average: 3.8, grades: [4, 3, 4, 4, 4], teacher: 'Новикова О.Н.' },
-  { id: '7', name: 'Биология', average: 4.4, grades: [4, 5, 4, 5, 4], teacher: 'Морозова Л.К.' },
-  { id: '8', name: 'География', average: 4.6, grades: [5, 5, 4, 5, 4], teacher: 'Волкова Н.А.' },
-];
-
-const getGradeColor = (grade: number): string => {
-  if (grade >= 4.5) return colors.grades.excellent;
-  if (grade >= 3.5) return colors.grades.good;
-  if (grade >= 2.5) return colors.grades.satisfactory;
-  return colors.grades.poor;
-};
-
 interface SubjectCardProps {
   subject: Subject;
+  themeColors: ThemeColors;
   onPress: (subject: Subject) => void;
 }
 
-const SubjectCard: React.FC<SubjectCardProps> = memo(({ subject, onPress }) => (
+const SubjectCard: React.FC<SubjectCardProps> = memo(({ subject, themeColors, onPress }) => (
   <Card style={styles.subjectCard} onPress={() => onPress(subject)}>
     <View style={styles.subjectHeader}>
       <View style={styles.subjectInfo}>
@@ -52,7 +43,7 @@ const SubjectCard: React.FC<SubjectCardProps> = memo(({ subject, onPress }) => (
           {subject.teacher}
         </Typography>
       </View>
-      <Ionicons style={styles.cardArrow} name="chevron-forward" size={20} color={colors.text.secondary} />
+      <Ionicons style={styles.cardArrow} name="chevron-forward" size={20} color={themeColors.text.secondary} />
     </View>
     <View style={styles.gradesPreview}>
       <Typography variant="caption" color="secondary" style={styles.gradesLabel}>
@@ -64,7 +55,7 @@ const SubjectCard: React.FC<SubjectCardProps> = memo(({ subject, onPress }) => (
             key={index}
             style={[
               styles.gradeBadge,
-              { backgroundColor: getGradeColor(grade) },
+              { backgroundColor: getGradeColor(grade, themeColors) },
             ]}
           >
             <Typography variant="body2" color="light">
@@ -76,7 +67,7 @@ const SubjectCard: React.FC<SubjectCardProps> = memo(({ subject, onPress }) => (
       <View
         style={[
           styles.averageContainer,
-          { backgroundColor: getGradeColor(subject.average) },
+          { backgroundColor: getGradeColor(subject.average, themeColors) },
         ]}
       >
         <Typography variant="h4" color="light">
@@ -91,8 +82,6 @@ SubjectCard.displayName = 'SubjectCard';
 
 type SummaryDesign = 'ribbon' | 'insight';
 
-// Current active design for the top summary card.
-// "ribbon" keeps previous version, "insight" is the new experiment.
 const ACTIVE_SUMMARY_DESIGN: SummaryDesign = 'insight';
 
 interface SummaryCardProps {
@@ -102,8 +91,6 @@ interface SummaryCardProps {
   performanceLabel: string;
   theme: Theme;
 }
-
-const withAlpha = (hexColor: string, alphaHex: string): string => `${hexColor}${alphaHex}`;
 
 const SummaryCardRibbon: React.FC<SummaryCardProps> = ({
   overallAverage,
@@ -203,7 +190,7 @@ const SummaryCardInsight: React.FC<SummaryCardProps> = ({
   performanceLabel,
   theme,
 }) => {
-  const gradeColor = getGradeColor(overallAverage);
+  const gradeColor = getGradeColor(overallAverage, theme.colors);
   const useHeaderBackground = theme.mode === 'light';
   const primaryAccent =
     theme.mode === 'dark' ? theme.colors.primary.light : theme.colors.primary.main;
@@ -336,9 +323,42 @@ const SummaryCardInsight: React.FC<SummaryCardProps> = ({
 export const GradesScreen: React.FC = () => {
   const { theme } = useTheme();
   const navigation = useNavigation<NavigationProp>();
+  const gradesBySubject = useGradesStore((s) => s.gradesBySubject);
+  const isLoadingGrades = useGradesStore((s) => s.isLoading);
+  const fetchGradesForSubjects = useGradesStore((s) => s.fetchGradesForSubjects);
+
+  const [subjects, setSubjects] = useState<SubjectListItem[]>([]);
+  const [isLoadingSubjects, setIsLoadingSubjects] = useState(true);
+
+  const loadSubjects = useCallback(async () => {
+    try {
+      setIsLoadingSubjects(true);
+      const data = await SubjectsApi.getSubjects();
+      setSubjects(data);
+      await fetchGradesForSubjects(data);
+    } catch (error) {
+      console.error('Failed to load subjects:', error);
+      setSubjects([]);
+    } finally {
+      setIsLoadingSubjects(false);
+    }
+  }, [fetchGradesForSubjects]);
+
+  useEffect(() => {
+    loadSubjects();
+  }, [loadSubjects]);
+
+  const listToShow = getSubjectsWithGrades(subjects, gradesBySubject);
+
+  const computed = getComputedFromStore(gradesBySubject);
+  const overallAverage = computed.overallAverage;
+  const totalGrades = computed.totalCount;
+  const performanceLabel = overallAverage >= 4.5 ? 'Отличная динамика' : 'Хорошая динамика';
+  const SummaryCardComponent =
+    ACTIVE_SUMMARY_DESIGN === 'insight' ? SummaryCardInsight : SummaryCardRibbon;
 
   const handleSubjectPress = useCallback(
-    (subject: Subject) => {
+    (subject: SubjectWithGrades) => {
       navigation.navigate('SubjectDetail', {
         subjectId: subject.id,
         subjectName: subject.name,
@@ -347,32 +367,50 @@ export const GradesScreen: React.FC = () => {
     [navigation]
   );
 
+  const cardSubjects: Subject[] = listToShow.map((s) => ({
+    id: s.id,
+    name: s.name,
+    average: s.average,
+    grades: s.grades,
+    teacher: s.teacherFormatted,
+  }));
+
   const renderSubjectItem = useCallback(
     ({ item }: { item: Subject }) => (
-      <SubjectCard subject={item} onPress={handleSubjectPress} />
+      <SubjectCard
+        subject={item}
+        themeColors={theme.colors}
+        onPress={() => handleSubjectPress(listToShow.find((s) => s.id === item.id)!)}
+      />
     ),
-    [handleSubjectPress]
+    [handleSubjectPress, listToShow, theme.colors]
   );
 
-  const overallAverage =
-    subjects.reduce((sum, s) => sum + s.average, 0) / subjects.length;
-  const totalGrades = subjects.reduce((sum, s) => sum + s.grades.length, 0);
-  const performanceLabel = overallAverage >= 4.5 ? 'Отличная динамика' : 'Хорошая динамика';
-  const SummaryCardComponent =
-    ACTIVE_SUMMARY_DESIGN === 'insight' ? SummaryCardInsight : SummaryCardRibbon;
+  const isLoading = isLoadingSubjects || (isLoadingGrades && subjects.length > 0);
+
+  if (isLoadingSubjects && subjects.length === 0) {
+    return (
+      <ScreenContainer>
+        <View style={styles.loadingWrap}>
+          <ActivityIndicator size="large" color={theme.colors.primary.main} />
+          <Typography variant="body2" color="secondary">Загрузка оценок...</Typography>
+        </View>
+      </ScreenContainer>
+    );
+  }
 
   return (
     <ScreenContainer padding={false}>
       <SummaryCardComponent
         overallAverage={overallAverage}
-        subjectCount={subjects.length}
+        subjectCount={cardSubjects.length}
         totalGrades={totalGrades}
         performanceLabel={performanceLabel}
         theme={theme}
       />
 
       <FlatList
-        data={subjects}
+        data={cardSubjects}
         keyExtractor={(item) => item.id}
         renderItem={renderSubjectItem}
         contentContainerStyle={styles.listContent}
@@ -493,6 +531,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 2,
     paddingVertical: spacing.sm,
+  },
+  loadingWrap: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: spacing.md,
   },
   listContent: {
     padding: spacing.md,

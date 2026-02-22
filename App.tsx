@@ -17,7 +17,8 @@ import { ProfileScreen } from '@pages/profile';
 import { NotificationsScreen } from '@pages/notifications';
 import { SettingsScreen } from '@pages/settings';
 import type { ThemeColors } from '@shared/config/theme';
-import { ThemeProvider, useTheme } from '@shared/lib';
+import { AppThemeProvider } from '@app/providers/AppThemeProvider';
+import { useTheme } from '@shared/lib';
 import { Header } from '@shared/ui';
 import { AboutAppScreen } from '@pages/about-app';
 import { HelpScreen } from '@pages/help';
@@ -186,7 +187,7 @@ function AppContent() {
   const { theme, isDark } = useTheme();
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const isLoading = useAuthStore((s) => s.isLoading);
-  const setLoading = useAuthStore((s) => s.setLoading);
+  const initializeAuth = useAuthStore((s) => s.initializeAuth);
   const didInit = useRef(false);
   const navigationTheme = useMemo(
     () => buildNavigationTheme(isDark, theme.colors),
@@ -196,9 +197,8 @@ function AppContent() {
   useEffect(() => {
     if (didInit.current) return;
     didInit.current = true;
-    const t = setTimeout(() => setLoading(false), 400);
-    return () => clearTimeout(t);
-  }, [setLoading]);
+    initializeAuth();
+  }, [initializeAuth]);
 
   if (isLoading) {
     return (
@@ -236,9 +236,9 @@ function AppContent() {
 
 export default function App() {
   return (
-    <ThemeProvider>
+    <AppThemeProvider>
       <AppContent />
-    </ThemeProvider>
+    </AppThemeProvider>
   );
 }
 

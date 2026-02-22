@@ -1,4 +1,5 @@
-export type ThemeMode = 'system' | 'light' | 'dark';
+import type { ThemeMode } from '@shared/config/theme';
+export type { ThemeMode } from '@shared/config/theme';
 
 export interface NotificationSettings {
   enabled: boolean;
@@ -13,12 +14,12 @@ export interface SettingsState {
 }
 
 export interface SettingsActions {
-  setThemeMode: (mode: ThemeMode) => void;
-  setNotificationsEnabled: (enabled: boolean) => void;
+  setThemeMode: (mode: ThemeMode) => Promise<void>;
+  setNotificationsEnabled: (enabled: boolean) => Promise<void>;
   setNotificationType: (
     type: Exclude<keyof NotificationSettings, 'enabled'>,
     enabled: boolean
-  ) => void;
-  setNotifications: (patch: Partial<NotificationSettings>) => void;
-  resetSettings: () => void;
+  ) => Promise<void>;
+  setNotifications: (patch: Partial<NotificationSettings>) => Promise<void>;
+  resetSettings: () => Promise<void>;
 }

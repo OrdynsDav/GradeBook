@@ -2,7 +2,7 @@ import React, { memo } from 'react';
 import { View, StyleSheet, FlatList } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ScreenContainer, Typography, Card } from '@shared/ui';
-import { colors, spacing} from '@shared/config/theme';
+import { colors, spacing } from '@shared/config/theme';
 
 type NotificationType = 'grade' | 'homework' | 'announcement' | 'schedule';
 

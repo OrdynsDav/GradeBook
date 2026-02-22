@@ -11,10 +11,10 @@
         "src/2_pages/*"
       ],
       "@widgets/*": [
-        "src/widgets/*"
+        "src/3_widgets/*"
       ],
       "@features/*": [
-        "src/features/*"
+        "src/4_features/*"
       ],
       "@entities/*": [
         "src/5_entities/*"

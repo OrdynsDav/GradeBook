@@ -1,73 +1,21 @@
 import React from 'react';
-import {
-  View,
-  StyleSheet,
-  Image,
-  Dimensions,
-  ScrollView,
-  KeyboardAvoidingView,
-  Platform,
-} from 'react-native';
+import { View, StyleSheet, Image, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useForm, Controller } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
 import { LinearGradient } from 'expo-linear-gradient';
-import {
-  Button,
-  Input,
-  Typography,
-  Card,
-} from '@shared/ui';
+import { Typography } from '@shared/ui';
+import { SCREEN_WIDTH, SCREEN_HEIGHT } from '@shared/config/constants';
 import { colors, spacing } from '@shared/config/theme';
-import { useAuthStore } from '@entities/user';
 import { Logo } from '@shared/ui/icons';
+import { LoginForm } from '@features/auth';
 
 const AUTH_BG = require('../../../../assets/images/auth-bg.jpg');
 
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
-
-// Фон: чуть увеличен и смещён к центру, чтобы важные элементы изображения были видны
 const BG_SCALE = 1.15;
 const BG_OFFSET_X = -SCREEN_WIDTH * 0.075;
 const BG_OFFSET_Y = -SCREEN_HEIGHT * 0.075;
 
-const loginSchema = z.object({
-  login: z.string({ error: 'Введите корректный login' }),
-  password: z.string().min(6, 'Пароль должен содержать минимум 6 символов'),
-});
-
-type LoginFormData = z.infer<typeof loginSchema>;
-
 export const LoginScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
-  const login = useAuthStore((state) => state.login);
-
-  const {
-    control,
-    handleSubmit,
-    formState: { errors, isSubmitting },
-  } = useForm<LoginFormData>({
-    resolver: zodResolver(loginSchema),
-    defaultValues: {
-      login: '',
-      password: '',
-    },
-  });
-
-  const onSubmit = async (data: LoginFormData) => {
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-
-    login({
-      id: '1',
-      login: data.login,
-      firstName: 'Давит',
-      lastName: 'Акобян',
-      middleName: 'Варданович',
-      role: 'student',
-      className: 'И14-1',
-    });
-  };
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['left', 'right']}>
@@ -109,7 +57,7 @@ export const LoginScreen: React.FC = () => {
             <View style={styles.header}>
               <View style={styles.headerContent}>
                 <View style={styles.logoContainer}>
-                  <Logo /> 
+                  <Logo />
                 </View>
                 <Typography variant="h2" color="light" align="center">
                   ПКТ
@@ -120,55 +68,7 @@ export const LoginScreen: React.FC = () => {
               </View>
             </View>
 
-            <Card style={styles.formCard} padding="lg">
-              <Typography variant="h3" align="center" style={styles.formTitle}>
-                Вход в систему
-              </Typography>
-
-              <Controller
-                control={control}
-                name="login"
-                render={({ field: { onChange, onBlur, value } }) => (
-                  <Input
-                    label="Логин"
-                    placeholder="Логин с карточки"
-                    keyboardType="default"
-                    autoCapitalize="none"
-                    leftIcon="person-outline"
-                    value={value}
-                    onChangeText={onChange}
-                    onBlur={onBlur}
-                    error={errors.login?.message}
-                  />
-                )}
-              />
-
-              <Controller
-                control={control}
-                name="password"
-                render={({ field: { onChange, onBlur, value } }) => (
-                  <Input
-                    label="Пароль"
-                    placeholder="Введите пароль"
-                    secureTextEntry
-                    leftIcon="lock-closed-outline"
-                    value={value}
-                    onChangeText={onChange}
-                    onBlur={onBlur}
-                    error={errors.password?.message}
-                  />
-                )}
-              />
-
-              <Button
-                title="Войти"
-                onPress={handleSubmit(onSubmit)}
-                loading={isSubmitting}
-                fullWidth
-                size="lg"
-                style={styles.loginButton}
-              />
-            </Card>
+            <LoginForm />
 
             <View style={styles.footer}>
               <Typography variant="caption" color="light" align="center">
@@ -228,17 +128,6 @@ const styles = StyleSheet.create({
   subtitle: {
     marginTop: spacing.xs,
     opacity: 0.9,
-  },
-  formCard: {
-    marginHorizontal: spacing.md,
-    borderRadius: 24,
-  },
-  formTitle: {
-    marginBottom: spacing.lg,
-  },
-  loginButton: {
-    marginTop: spacing.md,
-    marginBottom: spacing.sm,
   },
   footer: {
     paddingVertical: spacing.xl,

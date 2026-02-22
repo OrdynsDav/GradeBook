@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useState, useEffect } from 'react';
 import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -7,7 +7,9 @@ import { ScreenContainer, Typography, Card, Button } from '@shared/ui';
 import { spacing, borderRadius } from '@shared/config/theme';
 import { useTheme } from '@shared/lib';
 import { useAuthStore } from '@entities/user';
-import { ProfileStackParamList } from '@app/navigation/types';
+import { useGradesStore, getComputedFromStore } from '@entities/grades';
+import { NotificationsApi } from '@shared/lib/api';
+import type { ProfileStackParamList } from '@shared/lib/navigation';
 
 type NavigationProp = NativeStackNavigationProp<ProfileStackParamList, 'ProfileMain'>;
 
@@ -47,13 +49,13 @@ const MenuItem: React.FC<MenuItemProps> = ({
         )}
       </View>
       <View style={styles.menuRight}>
-        {showBadge && badgeCount && badgeCount > 0 && (
+        {showBadge && (badgeCount ?? 0) > 0 ? (
           <View style={[styles.badge, { backgroundColor: theme.colors.status.error }]}>
             <Typography variant="caption" color="light">
               {badgeCount}
             </Typography>
           </View>
-        )}
+        ) : null}
         <Ionicons name="chevron-forward" size={20} color={theme.colors.text.secondary} />
       </View>
     </TouchableOpacity>
@@ -65,7 +67,26 @@ export const ProfileScreen: React.FC = () => {
   const navigation = useNavigation<NavigationProp>();
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
+  const gradesBySubject = useGradesStore((s) => s.gradesBySubject);
+  const computed = getComputedFromStore(gradesBySubject);
   const accentColor = isDark ? theme.colors.primary.light : theme.colors.primary.main;
+  const ATTENDANCE_PERCENT = 98;
+
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  const loadUnreadCount = async () => {
+    try {
+      const data = await NotificationsApi.getNotifications({ status: 'unread', limit: 1 });
+      setUnreadCount(data.total);
+    } catch (error) {
+      console.warn('Failed to load unread notifications count:', error);
+      setUnreadCount(0);
+    }
+  };
+
+  useEffect(() => {
+    loadUnreadCount();
+  }, []);
 
   const getFullName = () => {
     if (!user) return '';
@@ -110,7 +131,7 @@ export const ProfileScreen: React.FC = () => {
           subtitle="Оценки, домашние задания, объявления"
           onPress={handleNotifications}
           showBadge
-          badgeCount={3}
+          badgeCount={unreadCount}
         />
         <View style={[styles.menuDivider, { backgroundColor: theme.colors.border.light }]} />
         <MenuItem
@@ -142,7 +163,7 @@ export const ProfileScreen: React.FC = () => {
         <View style={styles.statsGrid}>
           <View style={styles.statItem}>
             <Typography variant="h2" style={{ color: theme.colors.grades.excellent }}>
-              24
+              {computed.fivesCount}
             </Typography>
             <Typography variant="caption" color="secondary">
               Пятёрок
@@ -150,7 +171,7 @@ export const ProfileScreen: React.FC = () => {
           </View>
           <View style={styles.statItem}>
             <Typography variant="h2" style={{ color: theme.colors.grades.good }}>
-              18
+              {computed.foursCount}
             </Typography>
             <Typography variant="caption" color="secondary">
               Четвёрок
@@ -158,7 +179,7 @@ export const ProfileScreen: React.FC = () => {
           </View>
           <View style={styles.statItem}>
             <Typography variant="h2" style={{ color: theme.colors.grades.satisfactory }}>
-              5
+              {computed.threesCount}
             </Typography>
             <Typography variant="caption" color="secondary">
               Троек
@@ -166,7 +187,7 @@ export const ProfileScreen: React.FC = () => {
           </View>
           <View style={styles.statItem}>
             <Typography variant="h2" style={{ color: accentColor }}>
-              98%
+              {ATTENDANCE_PERCENT}%
             </Typography>
             <Typography variant="caption" color="secondary">
               Посещаемость
