@@ -63,11 +63,15 @@ export function getSubjectsWithGrades(
   });
 }
 
+const CACHE_TTL_MS = 60_000;
+
 export const useGradesStore = create<GradesStore>((set, get) => ({
+  subjects: [],
   gradesBySubject: {},
   isLoading: false,
   loadingSubjectIds: new Set(),
   error: null,
+  lastLoadedAt: 0,
 
   setGradesForSubject: (subjectId, grades) => {
     set((state) => ({
@@ -116,6 +120,39 @@ export const useGradesStore = create<GradesStore>((set, get) => ({
     } catch (err) {
       set({
         error: err instanceof Error ? err.message : 'Ошибка загрузки оценок',
+      });
+    } finally {
+      set({ isLoading: false });
+    }
+  },
+
+  loadAll: async () => {
+    const { lastLoadedAt, isLoading } = get();
+    if (isLoading) return;
+    if (Date.now() - lastLoadedAt < CACHE_TTL_MS) return;
+    await get().forceRefreshAll();
+  },
+
+  forceRefreshAll: async () => {
+    set({ isLoading: true, error: null });
+    const { setGradesForSubject } = get();
+    try {
+      const subs = await SubjectsApi.getSubjects();
+      set({ subjects: subs });
+      await Promise.all(
+        subs.map(async (subject) => {
+          try {
+            const grades = await SubjectsApi.getSubjectGrades(subject.id);
+            setGradesForSubject(subject.id, grades);
+          } catch {
+            setGradesForSubject(subject.id, []);
+          }
+        })
+      );
+      set({ lastLoadedAt: Date.now() });
+    } catch (err) {
+      set({
+        error: err instanceof Error ? err.message : 'Ошибка загрузки',
       });
     } finally {
       set({ isLoading: false });

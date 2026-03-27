@@ -25,9 +25,10 @@ export const LessonCard: React.FC<LessonCardProps> = memo(({ lesson, lessonNumbe
     timeZone: 'Europe/Moscow',
   });
   const timeRange = `${startTime} - ${endTime}`;
-  const teacherName = `${lesson.teacher.lastName} ${lesson.teacher.firstName.charAt(0)}.${
-    lesson.teacher.middleName ? lesson.teacher.middleName.charAt(0) + '.' : ''
-  }`;
+  const teacherName = lesson.teacher
+    ? `${lesson.teacher.lastName} ${lesson.teacher.firstName.charAt(0)}.${lesson.teacher.middleName ? lesson.teacher.middleName.charAt(0) + '.' : ''
+    }`
+    : '—';
 
   return (
     <Card

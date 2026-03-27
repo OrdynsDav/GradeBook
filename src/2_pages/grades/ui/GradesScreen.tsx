@@ -1,12 +1,11 @@
-import React, { useCallback, memo, useState, useEffect } from 'react';
-import { View, StyleSheet, FlatList, ActivityIndicator } from 'react-native';
+import React, { useCallback, memo, useEffect } from 'react';
+import { View, StyleSheet, FlatList, RefreshControl } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
-import { ScreenContainer, Typography, Card } from '@shared/ui';
+import { ScreenContainer, Typography, Card, Loader } from '@shared/ui';
 import { spacing, borderRadius, type Theme, type ThemeColors } from '@shared/config/theme';
-import { useTheme } from '@shared/lib';
-import { SubjectsApi, type SubjectListItem } from '@shared/lib/api';
+import { useTheme, useThrottledRefresh } from '@shared/lib';
 import type { GradesStackParamList } from '@shared/lib/navigation';
 import { getGradeColor, withAlpha } from '@shared/lib/utils';
 import {
@@ -323,30 +322,15 @@ const SummaryCardInsight: React.FC<SummaryCardProps> = ({
 export const GradesScreen: React.FC = () => {
   const { theme } = useTheme();
   const navigation = useNavigation<NavigationProp>();
+  const subjects = useGradesStore((s) => s.subjects);
   const gradesBySubject = useGradesStore((s) => s.gradesBySubject);
   const isLoadingGrades = useGradesStore((s) => s.isLoading);
-  const fetchGradesForSubjects = useGradesStore((s) => s.fetchGradesForSubjects);
-
-  const [subjects, setSubjects] = useState<SubjectListItem[]>([]);
-  const [isLoadingSubjects, setIsLoadingSubjects] = useState(true);
-
-  const loadSubjects = useCallback(async () => {
-    try {
-      setIsLoadingSubjects(true);
-      const data = await SubjectsApi.getSubjects();
-      setSubjects(data);
-      await fetchGradesForSubjects(data);
-    } catch (error) {
-      console.error('Failed to load subjects:', error);
-      setSubjects([]);
-    } finally {
-      setIsLoadingSubjects(false);
-    }
-  }, [fetchGradesForSubjects]);
+  const loadAll = useGradesStore((s) => s.loadAll);
+  const forceRefreshAll = useGradesStore((s) => s.forceRefreshAll);
 
   useEffect(() => {
-    loadSubjects();
-  }, [loadSubjects]);
+    void loadAll();
+  }, [loadAll]);
 
   const listToShow = getSubjectsWithGrades(subjects, gradesBySubject);
 
@@ -386,35 +370,41 @@ export const GradesScreen: React.FC = () => {
     [handleSubjectPress, listToShow, theme.colors]
   );
 
-  const isLoading = isLoadingSubjects || (isLoadingGrades && subjects.length > 0);
+  const isLoading = isLoadingGrades;
+  const [refreshing, handleRefresh] = useThrottledRefresh(forceRefreshAll);
 
-  if (isLoadingSubjects && subjects.length === 0) {
-    return (
-      <ScreenContainer>
-        <View style={styles.loadingWrap}>
-          <ActivityIndicator size="large" color={theme.colors.primary.main} />
-          <Typography variant="body2" color="secondary">Загрузка оценок...</Typography>
-        </View>
-      </ScreenContainer>
-    );
+  if (isLoadingGrades && subjects.length === 0) {
+    return <Loader theme={theme} title='Загрузка оценок...' />
   }
+
+  const listHeader = (
+    <SummaryCardComponent
+      overallAverage={overallAverage}
+      subjectCount={cardSubjects.length}
+      totalGrades={totalGrades}
+      performanceLabel={performanceLabel}
+      theme={theme}
+    />
+  );
 
   return (
     <ScreenContainer padding={false}>
-      <SummaryCardComponent
-        overallAverage={overallAverage}
-        subjectCount={cardSubjects.length}
-        totalGrades={totalGrades}
-        performanceLabel={performanceLabel}
-        theme={theme}
-      />
-
       <FlatList
         data={cardSubjects}
         keyExtractor={(item) => item.id}
         renderItem={renderSubjectItem}
+        ListHeaderComponent={listHeader}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            tintColor={theme.colors.primary.main}
+            colors={[theme.colors.primary.main]}
+            progressBackgroundColor={theme.colors.background.default}
+          />
+        }
       />
     </ScreenContainer>
   );
@@ -539,10 +529,12 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   listContent: {
-    padding: spacing.md,
+    paddingVertical: spacing.md,
     gap: spacing.sm,
   },
-  subjectCard: {},
+  subjectCard: {
+    marginHorizontal: spacing.md,
+  },
   subjectHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',

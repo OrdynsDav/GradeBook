@@ -1,10 +1,30 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import Constants from 'expo-constants';
 import {
   type AuthResponse,
   type LoginRequest,
   ApiRequestError,
   NetworkError,
 } from './types';
+
+const DEV_API_PORT = '3000';
+
+/** На физическом устройстве localhost — это сам телефон; берём хост ПК из Expo (тот же, что у Metro). */
+function getDevApiBaseUrl(): string {
+  const hostUri = Constants.expoConfig?.hostUri;
+  if (hostUri && typeof hostUri === 'string') {
+    try {
+      const normalized = hostUri.includes('://') ? hostUri : `http://${hostUri}`;
+      const { hostname } = new URL(normalized);
+      if (hostname && hostname !== 'localhost' && hostname !== '127.0.0.1') {
+        return `http://${hostname}:${DEV_API_PORT}`;
+      }
+    } catch {
+      // ignore
+    }
+  }
+  return `http://localhost:${DEV_API_PORT}`;
+}
 
 const ACCESS_TOKEN_KEY = 'accessToken';
 const REFRESH_TOKEN_KEY = 'refreshToken';
@@ -245,8 +265,11 @@ export class ApiClient {
 }
 
 // Global API client instance
-// Для эмулятора Android: 10.0.2.2:ПОРТ. Для реального устройства или если не работает — задайте EXPO_PUBLIC_API_URL (IP вашего ПК, напр. http://192.168.1.5:3000).
+// Dev: IP из Expo (телефон в сети) или localhost (симулятор / web). Переопределение: EXPO_PUBLIC_API_URL.
+// Production: Render, если env не задан.
 const apiBaseURL =
   (typeof process !== 'undefined' && process.env?.EXPO_PUBLIC_API_URL) ||
-  'https://gradebook-backend-xhw2.onrender.com';
+  (typeof __DEV__ !== 'undefined' && __DEV__
+    ? getDevApiBaseUrl()
+    : 'https://gradebook-backend-xhw2.onrender.com');
 export const apiClient = new ApiClient({ baseURL: apiBaseURL });

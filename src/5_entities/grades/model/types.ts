@@ -1,11 +1,13 @@
 import type { GradeItem, SubjectListItem } from '@shared/lib/api';
 
 export interface GradesState {
-  /** Кеш: subjectId -> список оценок с сервера. При обновлении списка — заменяем. */
+  subjects: SubjectListItem[];
   gradesBySubject: Record<string, GradeItem[]>;
   isLoading: boolean;
   loadingSubjectIds: Set<string>;
   error: string | null;
+  /** Timestamp последней успешной загрузки loadAll */
+  lastLoadedAt: number;
 }
 
 export interface GradesComputed {
@@ -27,8 +29,11 @@ export interface SubjectWithGrades extends SubjectListItem {
 export interface GradesActions {
   setGradesForSubject: (subjectId: string, grades: GradeItem[]) => void;
   fetchGradesForSubject: (subjectId: string) => Promise<void>;
-  /** Загружает оценки по всем переданным предметам, обновляет кеш */
   fetchGradesForSubjects: (subjects: SubjectListItem[]) => Promise<void>;
+  /** Загружает предметы + оценки, пропускает, если TTL не истёк */
+  loadAll: () => Promise<void>;
+  /** Принудительная перезагрузка (pull-to-refresh) */
+  forceRefreshAll: () => Promise<void>;
   clearError: () => void;
 }
 

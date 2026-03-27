@@ -73,8 +73,12 @@ export const Input: React.FC<InputProps> = ({
   const displayValue = isSecure ? getMaskedDisplay(realValue.length) : realValue;
 
   useEffect(() => {
-    prevDisplayLenRef.current = displayValue.length;
-  }, [displayValue.length]);
+    // Для логина (не password) нет смысла обновлять длину
+    // — это лишняя работа на каждом вводе на iOS.
+    if (isPassword) {
+      prevDisplayLenRef.current = displayValue.length;
+    }
+  }, [isPassword, displayValue.length]);
 
   const handleChangeText = (text: string) => {
     if (!onChangeText) return;
@@ -96,6 +100,7 @@ export const Input: React.FC<InputProps> = ({
     : isFocused
       ? theme.colors.primary.main
       : theme.colors.border.light;
+  const leftIconColor = isFocused || !!error ? borderColor : theme.colors.text.secondary;
 
   return (
     <View style={[styles.container, containerStyle]}>
@@ -111,7 +116,7 @@ export const Input: React.FC<InputProps> = ({
           <Ionicons
             name={leftIcon}
             size={20}
-            color={theme.colors.text.secondary}
+            color={leftIconColor}
             style={styles.leftIcon}
           />
         )}
@@ -134,7 +139,7 @@ export const Input: React.FC<InputProps> = ({
           autoCorrect={isPassword ? false : props.autoCorrect}
           spellCheck={isPassword ? false : props.spellCheck}
         />
-        
+
         {isPassword && (
           <TouchableOpacity
             onPress={() => setIsPasswordVisible(!isPasswordVisible)}

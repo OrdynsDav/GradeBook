@@ -4,6 +4,7 @@ import {
   StyleSheet,
   ViewStyle,
   ScrollView,
+  RefreshControl,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
@@ -19,6 +20,9 @@ interface ScreenContainerProps {
   backgroundColor?: string;
   padding?: boolean;
   keyboardAvoiding?: boolean;
+  /** Pull-to-refresh: вызывается при потягивании вниз (только при scrollable). */
+  onRefresh?: () => void | Promise<void>;
+  refreshing?: boolean;
 }
 
 export const ScreenContainer: React.FC<ScreenContainerProps> = ({
@@ -29,6 +33,8 @@ export const ScreenContainer: React.FC<ScreenContainerProps> = ({
   backgroundColor,
   padding = true,
   keyboardAvoiding = false,
+  onRefresh,
+  refreshing = false,
 }) => {
   const { theme } = useTheme();
   const resolvedBackgroundColor = backgroundColor ?? theme.colors.background.default;
@@ -40,12 +46,24 @@ export const ScreenContainer: React.FC<ScreenContainerProps> = ({
     style,
   ].filter(Boolean) as ViewStyle[];
 
+  const refreshControl =
+    scrollable && onRefresh ? (
+      <RefreshControl
+        refreshing={refreshing}
+        onRefresh={onRefresh}
+        tintColor={theme.colors.primary.main}
+        colors={[theme.colors.primary.main]}
+        progressBackgroundColor={resolvedBackgroundColor}
+      />
+    ) : undefined;
+
   const content = scrollable ? (
     <ScrollView
       style={styles.scrollView}
       contentContainerStyle={[styles.scrollContent, padding && styles.padding]}
       showsVerticalScrollIndicator={false}
       keyboardShouldPersistTaps="handled"
+      refreshControl={refreshControl}
     >
       {children}
     </ScrollView>

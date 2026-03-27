@@ -3,7 +3,7 @@ import { View, StyleSheet, Switch, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Card, ScreenContainer, Typography } from '@shared/ui';
 import { borderRadius, spacing } from '@shared/config/theme';
-import { useTheme } from '@shared/lib';
+import { useTheme, useThrottledRefresh } from '@shared/lib';
 import {
   type NotificationSettings,
   type ThemeMode,
@@ -42,25 +42,25 @@ const THEME_OPTIONS: Array<{
   subtitle: string;
   icon: keyof typeof Ionicons.glyphMap;
 }> = [
-  {
-    value: 'system',
-    title: 'Системный',
-    subtitle: 'Следовать системной теме устройства',
-    icon: 'phone-portrait-outline',
-  },
-  {
-    value: 'light',
-    title: 'Светлый',
-    subtitle: 'Светлое оформление приложения',
-    icon: 'sunny-outline',
-  },
-  {
-    value: 'dark',
-    title: 'Темный',
-    subtitle: 'Темное оформление приложения',
-    icon: 'moon-outline',
-  },
-];
+    {
+      value: 'system',
+      title: 'Системный',
+      subtitle: 'Следовать системной теме устройства',
+      icon: 'phone-portrait-outline',
+    },
+    {
+      value: 'light',
+      title: 'Светлый',
+      subtitle: 'Светлое оформление приложения',
+      icon: 'sunny-outline',
+    },
+    {
+      value: 'dark',
+      title: 'Темный',
+      subtitle: 'Темное оформление приложения',
+      icon: 'moon-outline',
+    },
+  ];
 
 interface SwitchRowProps {
   title: string;
@@ -113,9 +113,12 @@ export const SettingsScreen: React.FC = () => {
   const notifications = useSettingsStore((state) => state.notifications);
   const setNotificationsEnabled = useSettingsStore((state) => state.setNotificationsEnabled);
   const setNotificationType = useSettingsStore((state) => state.setNotificationType);
+  const syncWithServer = useSettingsStore((state) => state.syncWithServer);
+
+  const [refreshing, handleRefresh] = useThrottledRefresh(syncWithServer);
 
   return (
-    <ScreenContainer scrollable>
+    <ScreenContainer scrollable onRefresh={handleRefresh} refreshing={refreshing}>
       <Card style={styles.sectionCard} padding="none">
         <View style={styles.sectionHeader}>
           <Typography variant="h4">Уведомления</Typography>

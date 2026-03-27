@@ -1,25 +1,9 @@
-export type UserRole = 'student' | 'teacher' | 'admin';
+import type { Role, User as ApiUser } from '@shared/lib/api';
 
-export interface User {
-  id: string;
-  login: string;
-  firstName: string;
-  lastName: string;
-  middleName?: string;
-  role: UserRole;
-  avatar?: string;
-  classRoom?: {
-    id: string;
-    name: string;
-    course: number;
-    groupName: string;
-  };
-  createdAt: string;
-  updatedAt: string;
-  // Backward compatibility
-  classId?: string;
-  className?: string;
-}
+export type UserRole = Role;
+
+/** Профиль пользователя — контракт API (`User`); для подписи группы используйте `group?.name`. */
+export type User = ApiUser;
 
 export interface AuthState {
   user: User | null;

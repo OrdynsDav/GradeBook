@@ -1,12 +1,12 @@
 import { create } from 'zustand';
-import { apiClient, UserApi, ApiRequestError } from '@shared/lib/api';
+import { apiClient, UserApi, ApiRequestError, type User as ApiUser } from '@shared/lib/api';
 import { User, AuthState, LoginCredentials } from './types';
 
 interface AuthStore extends AuthState {
   // State setters
   setUser: (user: User | null) => void;
   setLoading: (isLoading: boolean) => void;
-  
+
   // API actions
   login: (credentials: LoginCredentials) => Promise<void>;
   logout: () => Promise<void>;
@@ -14,12 +14,7 @@ interface AuthStore extends AuthState {
   initializeAuth: () => Promise<void>;
 }
 
-const mapApiUserToUser = (apiUser: any): User => ({
-  ...apiUser,
-  // Backward compatibility for existing UI
-  classId: apiUser.classRoom?.id,
-  className: apiUser.classRoom?.name,
-});
+const mapApiUserToUser = (apiUser: ApiUser): User => apiUser;
 
 export const useAuthStore = create<AuthStore>((set, get) => ({
   user: null,
@@ -89,11 +84,11 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   initializeAuth: async () => {
     try {
       set({ isLoading: true });
-      
+
       if (await apiClient.isAuthenticated()) {
         const apiUser = await UserApi.getMe();
         const user = mapApiUserToUser(apiUser);
-        
+
         set({
           user,
           isAuthenticated: true,

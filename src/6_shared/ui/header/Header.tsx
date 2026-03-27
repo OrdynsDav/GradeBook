@@ -3,8 +3,9 @@ import { View, StyleSheet, TouchableOpacity, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Typography } from '../typography';
-import { spacing } from '../../config/theme';
+import { spacing, typography } from '../../config/theme';
 import { useTheme } from '../../lib/theme';
+import { fontClamp } from '@shared/lib';
 
 export interface HeaderProps {
   /** Текст заголовка */
@@ -72,21 +73,29 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: spacing.sm,
+    gap: spacing.sm,
   },
   backButton: {
     padding: spacing.xs,
     marginLeft: -spacing.xs,
-    minWidth: 44,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   titleWrap: {
     flex: 1,
     minWidth: 0,
-    alignSelf: 'stretch',
+    alignSelf: 'center',
     justifyContent: 'center',
     alignItems: 'flex-start',
   },
   title: {
     fontWeight: '600',
-    fontSize: 24,
+    paddingTop: spacing.xs,
+    fontSize: fontClamp(24, 26, 32),
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

@@ -1,14 +1,14 @@
-import React from 'react';
-import { View, StyleSheet } from 'react-native';
-import { useForm, Controller } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { Button, Input, Typography, Card } from '@shared/ui';
-import { colors, spacing } from '@shared/config/theme';
-import { useLogin } from '../model';
-import { loginSchema, type LoginFormData } from '../model/loginSchema';
+import React from "react";
+import { View, StyleSheet } from "react-native";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Button, Input, Typography, Card } from "@shared/ui";
+import { colors, spacing } from "@shared/config/theme";
+import { useLogin } from "../../model";
+import { loginSchema, type LoginFormData } from "../../model/loginSchema";
 
 export const LoginForm: React.FC = () => {
-  const { handleLogin, loginError, setLoginError } = useLogin();
+  const { handleLogin, loginError } = useLogin();
 
   const {
     control,
@@ -16,8 +16,8 @@ export const LoginForm: React.FC = () => {
     formState: { errors, isSubmitting },
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
-    mode: 'onSubmit',
-    defaultValues: { login: '', password: '' },
+    mode: "onSubmit",
+    defaultValues: { login: "", password: "" },
   });
 
   const onSubmit = (data: LoginFormData) => handleLogin(data);
@@ -37,6 +37,10 @@ export const LoginForm: React.FC = () => {
             placeholder="Логин с карточки"
             keyboardType="default"
             autoCapitalize="none"
+            autoCorrect={false}
+            spellCheck={false}
+            textContentType="username"
+            autoComplete="username"
             leftIcon="person-outline"
             value={value}
             onChangeText={onChange}
@@ -63,7 +67,7 @@ export const LoginForm: React.FC = () => {
         )}
       />
 
-      {loginError !== '' && (
+      {loginError !== "" && (
         <View style={styles.errorContainer}>
           <Typography variant="body2" style={styles.errorText}>
             {loginError}
@@ -99,7 +103,7 @@ const styles = StyleSheet.create({
   },
   errorText: {
     color: colors.status.error,
-    textAlign: 'center',
+    textAlign: "center",
   },
   loginButton: {
     marginTop: spacing.md,

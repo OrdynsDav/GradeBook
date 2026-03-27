@@ -1,14 +1,24 @@
-import React from 'react';
-import { View, StyleSheet, Image, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
-import { Typography } from '@shared/ui';
-import { SCREEN_WIDTH, SCREEN_HEIGHT } from '@shared/config/constants';
-import { colors, spacing } from '@shared/config/theme';
-import { Logo } from '@shared/ui/icons';
-import { LoginForm } from '@features/auth';
+import React from "react";
+import {
+  View,
+  StyleSheet,
+  Image,
+  ScrollView,
+  KeyboardAvoidingView,
+  Platform,
+} from "react-native";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
+import { LinearGradient } from "expo-linear-gradient";
+import { Typography } from "@shared/ui";
+import { SCREEN_WIDTH, SCREEN_HEIGHT } from "@shared/config/constants";
+import { colors, spacing } from "@shared/config/theme";
+import { Logo } from "@shared/ui/icons";
+import { LoginForm } from "@features/auth";
 
-const AUTH_BG = require('../../../../assets/images/auth-bg.jpg');
+const AUTH_BG = require("../../../../assets/images/auth-bg.jpg");
 
 const BG_SCALE = 1.15;
 const BG_OFFSET_X = -SCREEN_WIDTH * 0.075;
@@ -18,7 +28,7 @@ export const LoginScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['left', 'right']}>
+    <SafeAreaView style={styles.safeArea} edges={["left", "right"]}>
       <View style={styles.screenWrapper}>
         <Image
           source={AUTH_BG}
@@ -35,24 +45,36 @@ export const LoginScreen: React.FC = () => {
           resizeMode="cover"
         />
         <LinearGradient
-          colors={['rgba(128, 0, 32, 0.75)', 'rgba(74, 0, 18, 0.8)', 'rgba(26, 0, 8, 0.9)']}
+          colors={[
+            "rgba(128, 0, 32, 0.75)",
+            "rgba(74, 0, 18, 0.8)",
+            "rgba(26, 0, 8, 0.9)",
+          ]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={[
             styles.fullScreenBg,
-            { width: SCREEN_WIDTH, height: SCREEN_HEIGHT + insets.top, top: -insets.top },
+            {
+              width: SCREEN_WIDTH,
+              height: SCREEN_HEIGHT + insets.top,
+              top: -insets.top,
+            },
           ]}
         />
         <KeyboardAvoidingView
           style={styles.flex}
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          keyboardVerticalOffset={0}
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          keyboardVerticalOffset={Platform.OS === "ios" ? 0 : insets.top}
         >
           <ScrollView
             style={styles.flex}
-            contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top }]}
+            contentContainerStyle={[
+              styles.scrollContent,
+              { paddingTop: insets.top, paddingBottom: insets.bottom + spacing.lg },
+            ]}
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="interactive"
           >
             <View style={styles.header}>
               <View style={styles.headerContent}>
@@ -62,7 +84,12 @@ export const LoginScreen: React.FC = () => {
                 <Typography variant="h2" color="light" align="center">
                   ПКТ
                 </Typography>
-                <Typography variant="body1" color="light" align="center" style={styles.subtitle}>
+                <Typography
+                  variant="body1"
+                  color="light"
+                  align="center"
+                  style={styles.subtitle}
+                >
                   Электронный журнал
                 </Typography>
               </View>
@@ -89,15 +116,18 @@ const styles = StyleSheet.create({
   },
   screenWrapper: {
     flex: 1,
+    display: "flex",
+    flexDirection: "column",
   },
   flex: {
     flex: 1,
   },
   scrollContent: {
     flexGrow: 1,
+    justifyContent: "flex-start",
   },
   fullScreenBg: {
-    position: 'absolute',
+    position: "absolute",
     top: 0,
     left: 0,
   },
@@ -108,11 +138,11 @@ const styles = StyleSheet.create({
     minHeight: 280,
     paddingTop: spacing.xxl * 2,
     paddingBottom: spacing.xl,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   headerContent: {
-    alignItems: 'center',
+    alignItems: "center",
     zIndex: 1,
   },
   logoContainer: {
@@ -121,9 +151,9 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     marginBottom: spacing.md,
     backgroundColor: colors.background.paper,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
   },
   subtitle: {
     marginTop: spacing.xs,

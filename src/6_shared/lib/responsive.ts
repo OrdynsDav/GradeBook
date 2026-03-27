@@ -9,6 +9,16 @@ const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const baseWidth = 375;
 const baseHeight = 812;
 
+const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
+
+export const fontClamp = (base: number, min: number, max: number) => {
+  const scale = SCREEN_WIDTH / 375; // или другой базовый размер
+  return clamp(base * scale, min, max);
+};
+
+// usage
+fontSize: fontClamp(14, 12, 18)
+
 export const scale = (size: number): number => {
   return (SCREEN_WIDTH / baseWidth) * size;
 };

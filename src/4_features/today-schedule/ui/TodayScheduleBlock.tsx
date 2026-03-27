@@ -69,6 +69,7 @@ const styles = StyleSheet.create({
   emptySchedule: {
     flexDirection: 'row',
     alignItems: 'center',
+    marginInline: 'auto',
     gap: 8,
     paddingVertical: 16,
   },

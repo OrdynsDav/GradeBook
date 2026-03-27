@@ -1,15 +1,16 @@
-import React, { useCallback, useState, useEffect } from 'react';
+import React, { useCallback, useState, useEffect, useRef } from 'react';
 import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 import { ScreenContainer, Typography, Card, Button } from '@shared/ui';
 import { spacing, borderRadius } from '@shared/config/theme';
-import { useTheme } from '@shared/lib';
+import { useTheme, useThrottledRefresh } from '@shared/lib';
 import { useAuthStore } from '@entities/user';
 import { useGradesStore, getComputedFromStore } from '@entities/grades';
 import { NotificationsApi } from '@shared/lib/api';
 import type { ProfileStackParamList } from '@shared/lib/navigation';
+import { LogoutButton } from '@features/auth/ui';
 
 type NavigationProp = NativeStackNavigationProp<ProfileStackParamList, 'ProfileMain'>;
 
@@ -67,14 +68,14 @@ export const ProfileScreen: React.FC = () => {
   const navigation = useNavigation<NavigationProp>();
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
+  const refreshUserData = useAuthStore((s) => s.refreshUserData);
   const gradesBySubject = useGradesStore((s) => s.gradesBySubject);
   const computed = getComputedFromStore(gradesBySubject);
   const accentColor = isDark ? theme.colors.primary.light : theme.colors.primary.main;
   const ATTENDANCE_PERCENT = 98;
 
   const [unreadCount, setUnreadCount] = useState(0);
-
-  const loadUnreadCount = async () => {
+  const loadUnreadCount = useCallback(async () => {
     try {
       const data = await NotificationsApi.getNotifications({ status: 'unread', limit: 1 });
       setUnreadCount(data.total);
@@ -82,11 +83,20 @@ export const ProfileScreen: React.FC = () => {
       console.warn('Failed to load unread notifications count:', error);
       setUnreadCount(0);
     }
-  };
+  }, []);
 
   useEffect(() => {
     loadUnreadCount();
-  }, []);
+  }, [loadUnreadCount]);
+
+  const refreshAction = useCallback(async () => {
+    await Promise.all([
+      loadUnreadCount(),
+      refreshUserData().catch(() => { }),
+    ]);
+  }, [loadUnreadCount, refreshUserData]);
+
+  const [refreshing, handleRefresh] = useThrottledRefresh(refreshAction);
 
   const getFullName = () => {
     if (!user) return '';
@@ -97,11 +107,13 @@ export const ProfileScreen: React.FC = () => {
     if (!user) return '';
     const roles: Record<string, string> = {
       student: 'Студент',
-      teacher: 'Учитель',
+      teacher: 'Преподаватель',
       admin: 'Администратор',
     };
     return roles[user.role] || user.role;
   };
+
+  const studentGroupLabel = user?.group?.name ?? user?.group?.groupName;
 
   const handleNotifications = useCallback(() => navigation.navigate('Notifications'), [navigation]);
   const handleSettings = useCallback(() => navigation.navigate('Settings'), [navigation]);
@@ -109,7 +121,7 @@ export const ProfileScreen: React.FC = () => {
   const handleAboutApp = useCallback(() => navigation.navigate('AboutApp'), [navigation]);
 
   return (
-    <ScreenContainer scrollable>
+    <ScreenContainer scrollable onRefresh={handleRefresh} refreshing={refreshing}>
       <Card style={styles.profileCard}>
         <View style={styles.avatarContainer}>
           <View style={[styles.avatar, { backgroundColor: withAlpha(accentColor, isDark ? '2B' : '20') }]}>
@@ -120,7 +132,10 @@ export const ProfileScreen: React.FC = () => {
           {getFullName()}
         </Typography>
         <Typography variant="body2" color="secondary" align="center">
-          {getRoleLabel()} • группа {user?.className} 
+          {getRoleLabel()}
+          {user?.role === 'student' && studentGroupLabel
+            ? ` • группа ${studentGroupLabel}`
+            : ''}
         </Typography>
       </Card>
 
@@ -195,19 +210,7 @@ export const ProfileScreen: React.FC = () => {
           </View>
         </View>
       </Card>
-
-      <Button
-        title="Выйти из аккаунта"
-        onPress={logout}
-        variant="outline"
-        fullWidth
-        style={{
-          ...styles.logoutButton,
-          borderColor: accentColor,
-          backgroundColor: withAlpha(accentColor, isDark ? '14' : '08'),
-        }}
-        textStyle={{ color: accentColor }}
-      />
+      <LogoutButton isDark={isDark} theme={theme} />
     </ScreenContainer>
   );
 };
@@ -274,8 +277,5 @@ const styles = StyleSheet.create({
   },
   statItem: {
     alignItems: 'center',
-  },
-  logoutButton: {
-    marginBottom: spacing.lg,
-  },
+  }
 });

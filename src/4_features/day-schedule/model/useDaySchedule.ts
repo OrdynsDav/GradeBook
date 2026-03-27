@@ -38,7 +38,7 @@ export function useDaySchedule() {
       setIsLoading(true);
       setError('');
       const data = await ScheduleApi.getWeekSchedule(format(date, 'yyyy-MM-dd'));
-      const items = Array.isArray(data?.items) ? data.items : [];
+      const items = Array.isArray(data) ? data : [];
       const dayLessons = items.filter((lesson) => {
         const lessonDate = new Date(lesson.startsAt);
         return format(lessonDate, 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd');

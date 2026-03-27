@@ -16,6 +16,8 @@ import type {
   NotificationsQueryParams,
   CreateGradeRequest,
   NotificationsReadAllResponse,
+  GroupListItem,
+  CreateGroupRequest,
 } from './types';
 
 export class UserApi {
@@ -38,10 +40,24 @@ export class DashboardApi {
   }
 }
 
+export class GroupsApi {
+  static async list(): Promise<GroupListItem[]> {
+    return apiClient.request<GroupListItem[]>('/api/v1/groups');
+  }
+
+  static async create(data: CreateGroupRequest): Promise<GroupListItem> {
+    return apiClient.request<GroupListItem>('/api/v1/groups', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+  }
+}
+
 export class SubjectsApi {
   static async getSubjects(params: SubjectsQueryParams = {}): Promise<SubjectListItem[]> {
     const url = new URL('/api/v1/subjects', apiClient['baseURL']);
-    if (params.classRoomId) url.searchParams.set('classRoomId', params.classRoomId);
+    if (params.groupId) url.searchParams.set('groupId', params.groupId);
     if (params.teacherId) url.searchParams.set('teacherId', params.teacherId);
 
     return apiClient.request<SubjectListItem[]>(url.pathname + url.search);
@@ -67,7 +83,7 @@ export class ScheduleApi {
   ): Promise<ScheduleWeekResponse> {
     const url = new URL('/api/v1/schedule/week', apiClient['baseURL']);
     url.searchParams.set('date', date);
-    if (params.classRoomId) url.searchParams.set('classRoomId', params.classRoomId);
+    if (params.groupId) url.searchParams.set('groupId', params.groupId);
     if (params.teacherId) url.searchParams.set('teacherId', params.teacherId);
 
     return apiClient.request<ScheduleWeekResponse>(url.pathname + url.search);
@@ -79,7 +95,7 @@ export class ScheduleApi {
   ): Promise<LessonItem[]> {
     const url = new URL('/api/v1/schedule/day', apiClient['baseURL']);
     url.searchParams.set('date', date);
-    if (params.classRoomId) url.searchParams.set('classRoomId', params.classRoomId);
+    if (params.groupId) url.searchParams.set('groupId', params.groupId);
     if (params.teacherId) url.searchParams.set('teacherId', params.teacherId);
 
     return apiClient.request<LessonItem[]>(url.pathname + url.search);

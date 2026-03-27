@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   View,
   StyleSheet,
   ScrollView,
+  RefreshControl,
   TouchableOpacity,
   ActivityIndicator,
 } from 'react-native';
@@ -10,7 +11,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { isSameDay } from 'date-fns';
 import { ScreenContainer, Typography } from '@shared/ui';
 import { spacing, borderRadius } from '@shared/config/theme';
-import { useTheme } from '@shared/lib';
+import { useTheme, useThrottledRefresh } from '@shared/lib';
 import { useDaySchedule } from '../model/useDaySchedule';
 import { LessonCard } from './LessonCard';
 
@@ -25,18 +26,26 @@ export const DayScheduleView: React.FC = () => {
     isLoading,
     error,
     todayDate,
+    loadScheduleForDay,
   } = useDaySchedule();
+  const refreshAction = useCallback(async () => {
+    if (!selectedCalendarDay) return;
+    await loadScheduleForDay(selectedCalendarDay.date);
+  }, [selectedCalendarDay, loadScheduleForDay]);
+
+  const [refreshing, handleRefresh] = useThrottledRefresh(refreshAction);
 
   const sortedLessons = [...lessons].sort(
     (a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime()
   );
 
-  const lessonCountLabel =
-    lessons.length === 1
-      ? 'урок'
-      : lessons.length < 5
-        ? 'урока'
-        : 'уроков';
+  const formatLessons = (length: number) => {
+    if (length === 1) return 'пара'
+    if (length === 0 || length > 5) return 'пар'
+    return 'пары'
+  }
+
+  const lessonCountLabel = formatLessons(lessons.length)
 
   return (
     <ScreenContainer padding={false}>
@@ -74,16 +83,16 @@ export const DayScheduleView: React.FC = () => {
                     borderColor: theme.colors.primary.main,
                   },
                   isToday &&
-                    !isSelected &&
-                    !day.isDisabled && {
-                      borderColor: theme.colors.primary.light,
-                      backgroundColor: `${theme.colors.primary.main}1A`,
-                    },
+                  !isSelected &&
+                  !day.isDisabled && {
+                    borderColor: theme.colors.primary.light,
+                    backgroundColor: `${theme.colors.primary.main}1A`,
+                  },
                   isSelected &&
-                    !day.isDisabled && {
-                      backgroundColor: theme.colors.primary.main,
-                      borderColor: theme.colors.primary.main,
-                    },
+                  !day.isDisabled && {
+                    backgroundColor: theme.colors.primary.main,
+                    borderColor: theme.colors.primary.main,
+                  },
                   day.isDisabled && !isSelected && styles.dayButtonDisabled,
                 ]}
                 onPress={() => setSelectedDay(day.index)}
@@ -137,6 +146,15 @@ export const DayScheduleView: React.FC = () => {
       <ScrollView
         contentContainerStyle={styles.lessonsContainer}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            tintColor={theme.colors.primary.main}
+            colors={[theme.colors.primary.main]}
+            progressBackgroundColor={theme.colors.background.paper}
+          />
+        }
       >
         {isLoading ? (
           <View style={styles.emptyState}>
@@ -167,7 +185,7 @@ export const DayScheduleView: React.FC = () => {
           <View style={styles.emptyState}>
             <Ionicons name="calendar-outline" size={64} color={theme.colors.text.disabled} />
             <Typography variant="h4" color="secondary" align="center">
-              Нет уроков
+              Нет пар
             </Typography>
             <Typography variant="body2" color="disabled" align="center">
               В этот день занятий нет

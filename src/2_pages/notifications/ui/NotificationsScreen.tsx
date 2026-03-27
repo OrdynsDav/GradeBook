@@ -156,7 +156,7 @@ export const NotificationsScreen: React.FC = () => {
       {unreadCount > 0 && (
         <View style={styles.unreadBanner}>
           <Typography variant="body2" color="light">
-            {unreadCount} непрочитанных уведомлений
+            {unreadCount} непрочитанных уведомления
           </Typography>
         </View>
       )}
