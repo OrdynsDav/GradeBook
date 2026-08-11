@@ -1,3 +1,6 @@
+# Скриншоты на странице
+https://pochu-pkt.vercel.app/life/schedule
+
 # GradeBook - Электронный журнал
 
 Мобильное приложение электронного журнала на React Native (Expo).
